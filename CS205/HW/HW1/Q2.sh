@@ -1,1 +1,1 @@
-head -n -5 cat *.txt >> allmixedLast5
+tail -n 5 *.txt > allmixedLast5
