@@ -1,0 +1,30 @@
+object ls
+{
+    def Split(List1: List[Int]): (List[Int], List[Int]) =
+    {
+        if (List1 = null)
+            x = 1
+        else
+        {
+            if (rando.i%2 ==0)
+                {
+                    List2 ::: List1.head
+                    List1.patch(0, Nill, 1)
+                }
+            else
+                {
+                    List3 ::: List1.head
+                    List1.patch(0, Nill, 1)
+                }
+        }
+    }
+    def rand(args: Array[String])
+    {
+        i = 0
+    }
+    def main(args: Array[String])
+    {
+        rando()
+        Split(1,2,3,4)
+    }
+}
