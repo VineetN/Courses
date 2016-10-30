@@ -13,8 +13,8 @@ def split[A](n: Int, l: List[A]):(List[A], List[A]) =
     }
 def main(args: Array[String])
     {
-        val z = (1, 2, 3, 4, 5, 6)
-        split(z)
+        
+        println(split(6, List(1, 2, 3, 4, 5)))
     }
     
 }
