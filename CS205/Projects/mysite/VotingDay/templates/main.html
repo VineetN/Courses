@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{% load static %}
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+  <title>Voting Day- Register</title>
+
+  <!-- CSS  -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="{% static 'VotingDay/css/materialize.css' %}" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link href="{% static 'VotingDay/css/style.css' %}" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link rel="icon" type="image/png" href="{% static 'VotingDay/img/favcon.jpg' %}"/>
+</head>
+<body bgcolor="#eeebeb">
+  <nav class="light-blue lighten-1" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo center">Voting Day</a>
+    </div>
+  </nav>
+
+
+  <div class="container">
+    <div class="section">
+
+      <!--   Icon Section   -->
+
+      <div class="row">
+        <form action='register.html' method="POST" id="form1">
+        {% csrf_token %}
+        {% for i in display %}
+
+          <div class="col s12 m6 l2">
+            <ul class="collection with-header">
+              <li class="collection-header">
+                <h5 align = "center">
+                  <p align = 'center'>
+                    <input class="with-gap" name="group1" type="radio" id="{{i.party_name}}+0" onchange= 'DisBut()'/>
+                    <label for="{{i.party_name}}+0"><h5>{{i.party_name}}</h5></label>
+                  </p>
+                </h5>
+              </li>
+                <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+1" class="filled-in" id="{{i.party_name}}+1" /><label for="{{i.party_name}}+1">{{i.candidate1}}</label></p></li>
+                {% if i.candidate2 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+2" class="filled-in" id="{{i.party_name}}+2" /><label for="{{i.party_name}}+2">{{i.candidate2}}</label></p></li>
+                {% endif %}
+                {% if i.candidate3 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+3" class="filled-in" id="{{i.party_name}}+3" /><label for="{{i.party_name}}+3">{{i.candidate3}}</label></p></li>
+                {% endif %}
+                {% if i.candidate4 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+4" class="filled-in" id="{{i.party_name}}+4" /><label for="{{i.party_name}}+4">{{i.candidate4}}</label></p></li>
+                {% endif %}
+                {% if i.candidate5 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+5" class="filled-in" id="{{i.party_name}}+5" /><label for="{{i.party_name}}+5">{{i.candidate5}}</label></p></li>
+                {% endif %}
+                {% if i.candidate6 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+6" class="filled-in" id="{{i.party_name}}+6" /><label for="{{i.party_name}}+6">{{i.candidate6}}</label></p></li>
+                {% endif %}
+                {% if i.candidate7 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+7" class="filled-in" id="{{i.party_name}}+7" /><label for="{{i.party_name}}+7">{{i.candidate7}}</label></p></li>
+                {% endif %}
+                {% if i.candidate8 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+8" class="filled-in" id="{{i.party_name}}+8" /><label for="{{i.party_name}}+8">{{i.candidate8}}</label></p></li>
+                {% endif %}
+                {% if i.candidate9 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+9" class="filled-in" id="{{i.party_name}}+9" /><label for="{{i.party_name}}+9'">{{i.candidate9}}</label></p></li>
+                {% endif %}
+                {% if i.candidate10 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+10" class="filled-in" id="{{i.party_name}}+10" /><label for="{{i.party_name}}+10">{{i.candidate10}}</label></p></li>
+                {% endif %}
+                {% if i.candidate11 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+11" class="filled-in" id="{{i.party_name}}+11" /><label for="{{i.party_name}}+11">{{i.candidate11}}</label></p></li>
+                {% endif %}
+                {% if i.candidate12 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+12" class="filled-in" id="{{i.party_name}}+12" /><label for="{{i.party_name}}+12">{{i.candidate12}}</label></p></li>
+                {% endif %}
+                {% if i.candidate13 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+13" class="filled-in" id="{{i.party_name}}+13" /><label for="{{i.party_name}}+13">{{i.candidate13}}</label></p></li>
+                {% endif %}
+                {% if i.candidate14 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+14" class="filled-in" id="{{i.party_name}}+14" /><label for="{{i.party_name}}+14">{{i.candidate14}}</label></p></li>
+                {% endif %}
+                {% if i.candidate15 != 'NULL' %}
+                  <li class="collection-item"><p><input type="checkbox" name="{{i.party_name}}+15" class="filled-in" id="{{i.party_name}}+15" /><label for="{{i.party_name}}+15">{{i.candidate15}}</label></p></li>
+                {% endif %}
+            </ul>
+          </div>
+        {% endfor %}
+
+      <div class="row" align="center">
+        <div class="input-field col s6 offset-s3">
+          <button class="btn waves-effect waves-light" type="submit" onclick="SubBut();">Cast My Vote!</button>
+        </div>
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+
+  <footer class="page-footer rgb(21,43,100)">
+    <div class="footer-copyright">
+      <div class="container">
+      Made by Ayush, Koishore and Vineet</a>
+      </div>
+    </div>
+  </footer>
+
+
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="{% static 'VotingDay/js/materialize.js' %}"></script>
+  <script src="{% static 'VotingDay/js/init.js' %}"></script>
+  <script src="{% static 'VotingDay/js/check.js' %}"></script>
+  <script src="{% static 'VotingDay/js/dependent.js' %}"></script>
+  <!-- {% for i in vote %} -->
+    <script>
+    console.log("script working");
+
+    $(document).on('submit','#form1',function(e){
+      $.ajax(
+      {
+         type: "POST",
+         url: "/register.html/" ,
+         data: {stuff_for_python:$('#%s',(Prakrit+0,)), csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val()},
+         success: function(response)
+         {
+             alert(response);
+         },
+         error: function(data)
+         {
+             alert(data.responseText);
+         },
+      })
+    });
+
+    </script>
+  <!-- {% endfor %} -->
+
+  </body>
+</html>

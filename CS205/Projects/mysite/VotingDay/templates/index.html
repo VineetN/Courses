@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{% load static %}
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+  <title>Voting Day - Login</title>
+
+  <!-- CSS  -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="{% static 'VotingDay/css/materialize.css' %}" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link href="{% static 'VotingDay/css/style.css' %}" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link rel="icon" type="image/png" href="{% static 'img/favcon.jpg' %}"/>
+</head>
+<body bgcolor="#eeebeb">
+  <nav>
+    <div class="nav-wrapper">
+      <a href="#" class="brand-logo">Voting Day</a>
+      <ul id="nav-mobile" class="right hide-on-med-and-down">
+        <li><a href="results.html">View Results</a></li>
+      </ul>
+    </div>
+  </nav>
+  <div class="section no-pad-bot" id="index-banner">
+    <div class="container">
+      <div class="header red-text" align = "center">
+        <ul><span style="color: rgb(200,16,46);">
+          <li>To vote, you must first select a party by clicking a radio button.</li>
+          <li>Then select/unselect the candidates you want to vote for, and click "Cast my Vote!"</li>
+          <li>You cannot vote for candidates from two different parties.</li>
+        </span></ul>
+      </div>
+      <h1 class="header center orange-text"><img src="{% static 'VotingDay/img/ashoka_logo.jpg' %}" style="width:304px;height:304px;"></h1>
+      <div class="row center">
+        <h5 class="header col s12 light">Login with your email and student ID</h5>
+      </div>
+      <div class="row">
+
+    <form name = "loginform" class="col s6" action = "main.html" method="get">
+      <div class="row">
+        <div class="input-field col s6 offset-s9">
+          <input id="email" type="email" class="validate" maxlength="50" required="" aria-required="true">
+          <label for="email" data-error="Enter a vaild email ID" data-success="All good!">Email ID</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s6 offset-s9">
+          <input id="id" type="text" class="validate" maxlength="15" required="" aria-required="true">
+          <label for="id">Student ID</label>
+        </div>
+      </div>
+      <div class="row" align="center">
+        <div class="input-field col s6 offset-s9">
+          <button class="btn waves-effect waves-light" type="submit" name="action">
+            Login
+            <i class="material-icons right">send</i>
+          </button>
+          </div>
+      </div>
+    </form>
+  </div>
+
+    </div>
+  </div>
+
+
+  <footer class="page-footer rgb(21,43,100)">
+    <div class="footer-copyright">
+      <div class="container">
+      Made by Ayush, Koishore and Vineet
+      </div>
+    </div>
+  </footer>
+
+
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="{% static 'VotingDay/js/materialize.js' %}"></script>
+  <script src="{% static 'VotingDay/js/init.js' %}"></script>
+
+  </body>
+</html>
