@@ -1,0 +1,19 @@
+{
+  "name": "ai-news-aggregator",
+  "version": "1.0.0",
+  "description": "AI-in-industry signal aggregator — weird deployments, unexpected partnerships, regulatory surprises",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "axios": "^1.7.2",
+    "better-sqlite3": "^9.6.0",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-cron": "^3.0.3"
+  }
+}

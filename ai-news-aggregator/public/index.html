@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Signal — Non-Obvious Industry News</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f12;
+      --surface: #13171e;
+      --surface2: #1a1f28;
+      --border: #222831;
+      --border2: #2a3240;
+      --text: #dde3ec;
+      --muted: #7a8899;
+      --accent: #4a9eff;
+      --accent2: #2d6ec9;
+      --green: #3ecf8e;
+      --amber: #f5a623;
+      --red: #e5534b;
+      --purple: #9b8aff;
+      --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    html { font-size: 14px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; color: #7bbdff; }
+
+    /* ── Status bar ── */
+    #status-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #0a0c0f;
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      height: 44px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    #status-bar .brand {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      margin-right: 4px;
+    }
+
+    #status-bar .sep {
+      color: var(--border2);
+      user-select: none;
+    }
+
+    .status-item { white-space: nowrap; }
+    .status-item span { color: var(--text); }
+
+    #pipeline-indicator {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    #pipeline-indicator.running {
+      background: var(--amber);
+      animation: pulse 1s ease-in-out infinite;
+    }
+    #pipeline-indicator.idle { background: var(--green); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    #btn-refresh {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    #btn-refresh:hover { background: var(--surface2); border-color: var(--accent2); }
+    #btn-refresh:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Main layout ── */
+    #main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    /* ── Page header ── */
+    #page-header {
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #page-header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    #page-header p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── Empty / loading states ── */
+    #loading, #empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 80px 20px;
+    }
+
+    .spinner {
+      width: 24px; height: 24px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Cluster cards ── */
+    #feed { display: flex; flex-direction: column; gap: 1px; }
+
+    .cluster-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .cluster-card:hover { border-color: var(--border2); }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px 0;
+      flex-wrap: wrap;
+    }
+
+    .cluster-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .industry-badge {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 2px 7px;
+      border-radius: 3px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .score-badges {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .score-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .score-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .novelty-label { color: var(--purple); }
+    .impact-label { color: var(--amber); }
+
+    .card-body { padding: 10px 16px 14px; }
+
+    .card-headline {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .card-headline a { color: inherit; }
+    .card-headline a:hover { color: var(--accent); text-decoration: none; }
+
+    .card-summary {
+      font-size: 13px;
+      color: #99aabb;
+      line-height: 1.65;
+      margin-bottom: 10px;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .source-domain {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .tags {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 1px 6px;
+      border-radius: 2px;
+      background: rgba(74, 158, 255, 0.08);
+      color: rgba(74, 158, 255, 0.7);
+      border: 1px solid rgba(74, 158, 255, 0.15);
+    }
+
+    /* ── Also covering section ── */
+    .also-covering {
+      border-top: 1px solid var(--border);
+      margin: 0 0 0;
+    }
+
+    .also-toggle {
+      width: 100%;
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      text-align: left;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: color 0.1s, background 0.1s;
+    }
+    .also-toggle:hover { color: var(--text); background: var(--surface2); }
+
+    .toggle-arrow {
+      transition: transform 0.2s;
+      font-size: 9px;
+      color: var(--muted);
+    }
+    .also-toggle.open .toggle-arrow { transform: rotate(90deg); }
+
+    .also-list {
+      display: none;
+      padding: 0 16px 12px;
+    }
+    .also-list.open { display: block; }
+
+    .also-item {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .also-item:last-child { border-bottom: none; }
+
+    .also-domain {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 110px;
+    }
+
+    .also-headline { color: var(--text); line-height: 1.4; }
+    .also-headline a { color: inherit; }
+    .also-headline a:hover { color: var(--accent); }
+
+    /* ── Score color helpers ── */
+    .score-1, .score-2 { background: #3a3a3a; }
+    .score-3, .score-4 { background: #4a5a3a; }
+    .score-5, .score-6 { background: #5a5a20; }
+    .score-7, .score-8 { background: #b07d20; }
+    .score-9, .score-10 { background: #c0402a; }
+
+    .novelty-9, .novelty-10 { background: var(--purple); }
+    .novelty-7, .novelty-8 { background: #7060cc; }
+    .novelty-5, .novelty-6 { background: #4a406a; }
+    .novelty-3, .novelty-4 { background: #302840; }
+    .novelty-1, .novelty-2 { background: #252030; }
+
+    .impact-9, .impact-10 { background: var(--red); }
+    .impact-7, .impact-8 { background: var(--amber); }
+    .impact-5, .impact-6 { background: #8a6a20; }
+    .impact-3, .impact-4 { background: #4a4020; }
+    .impact-1, .impact-2 { background: #2a2a20; }
+
+    /* ── Countdown timer ── */
+    #countdown { color: var(--text); }
+
+    /* ── Error toast ── */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #2d1a1a;
+      border: 1px solid var(--red);
+      color: #ffaaaa;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      display: none;
+      z-index: 999;
+      max-width: 340px;
+    }
+    #toast.show { display: block; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      #status-bar { height: auto; padding: 8px 12px; gap: 10px; }
+      #main { padding: 16px 12px 40px; }
+      .card-headline { font-size: 14px; }
+      .score-badges { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Status bar -->
+<div id="status-bar">
+  <span class="brand">AI Signal</span>
+  <span class="sep">|</span>
+  <span class="status-item">
+    <span id="pipeline-indicator"></span>
+    <span id="pipeline-status">loading…</span>
+  </span>
+  <span class="sep">|</span>
+  <span class="status-item">Last refresh: <span id="last-refresh">—</span></span>
+  <span class="sep">|</span>
+  <span class="status-item">Next: <span id="countdown">—</span></span>
+  <span class="sep">|</span>
+  <span class="status-item"><span id="total-articles">—</span> articles</span>
+  <button id="btn-refresh" title="Trigger a new pipeline run now">↻ Refresh Now</button>
+</div>
+
+<!-- Main content -->
+<div id="main">
+  <div id="page-header">
+    <h1>Non-Obvious AI in Industry</h1>
+    <p>Signal over noise — weird deployments, unexpected partnerships, regulatory surprises, research with real-world implications.</p>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    Loading feed…
+  </div>
+
+  <div id="empty" style="display:none">
+    No articles yet. Pipeline may still be running — check back shortly or click <strong>Refresh Now</strong>.
+  </div>
+
+  <div id="feed" style="display:none"></div>
+</div>
+
+<!-- Error toast -->
+<div id="toast"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let nextRefreshTs = null;
+  let countdownTimer = null;
+  let pollTimer = null;
+
+  // ── DOM refs ───────────────────────────────────────────────────────────────
+  const feedEl = document.getElementById('feed');
+  const loadingEl = document.getElementById('loading');
+  const emptyEl = document.getElementById('empty');
+  const lastRefreshEl = document.getElementById('last-refresh');
+  const countdownEl = document.getElementById('countdown');
+  const totalEl = document.getElementById('total-articles');
+  const pipelineEl = document.getElementById('pipeline-status');
+  const indicatorEl = document.getElementById('pipeline-indicator');
+  const btnRefresh = document.getElementById('btn-refresh');
+  const toastEl = document.getElementById('toast');
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  loadFeed();
+  startCountdown();
+
+  // Poll every 30s for status updates while visible
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clearInterval(pollTimer);
+    else pollTimer = setInterval(loadFeed, 30000);
+  });
+  pollTimer = setInterval(loadFeed, 30000);
+
+  // ── Refresh button ─────────────────────────────────────────────────────────
+  btnRefresh.addEventListener('click', async () => {
+    btnRefresh.disabled = true;
+    btnRefresh.textContent = '↻ Starting…';
+    try {
+      const r = await fetch('/api/refresh', { method: 'POST' });
+      const d = await r.json();
+      if (d.status === 'started') {
+        pipelineEl.textContent = 'running';
+        indicatorEl.className = 'running';
+        pollForCompletion();
+      }
+    } catch (e) {
+      showToast('Failed to start refresh: ' + e.message);
+      btnRefresh.disabled = false;
+      btnRefresh.textContent = '↻ Refresh Now';
+    }
+  });
+
+  // ── Feed loading ───────────────────────────────────────────────────────────
+  async function loadFeed() {
+    try {
+      const r = await fetch('/api/feed');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      renderMeta(data.meta);
+      renderFeed(data.clusters);
+    } catch (e) {
+      showToast('Error loading feed: ' + e.message);
+    }
+  }
+
+  function renderMeta(meta) {
+    if (!meta) return;
+
+    // Last refresh
+    lastRefreshEl.textContent = meta.last_refresh
+      ? formatRelativeTime(meta.last_refresh)
+      : 'never';
+
+    // Next refresh
+    if (meta.next_refresh) {
+      nextRefreshTs = new Date(meta.next_refresh).getTime();
+    }
+
+    // Total articles
+    totalEl.textContent = meta.total_articles || 0;
+
+    // Pipeline state
+    if (meta.pipeline_running) {
+      pipelineEl.textContent = 'running';
+      indicatorEl.className = 'running';
+      btnRefresh.disabled = true;
+      btnRefresh.textContent = '↻ Running…';
+    } else {
+      pipelineEl.textContent = 'idle';
+      indicatorEl.className = 'idle';
+      btnRefresh.disabled = false;
+      btnRefresh.textContent = '↻ Refresh Now';
+    }
+  }
+
+  function renderFeed(clusters) {
+    loadingEl.style.display = 'none';
+
+    if (!clusters || clusters.length === 0) {
+      emptyEl.style.display = 'block';
+      feedEl.style.display = 'none';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    feedEl.style.display = 'flex';
+    feedEl.innerHTML = clusters.map(renderCluster).join('');
+
+    // Attach toggle listeners
+    feedEl.querySelectorAll('.also-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const list = btn.nextElementSibling;
+        btn.classList.toggle('open');
+        list.classList.toggle('open');
+      });
+    });
+  }
+
+  function renderCluster(cluster) {
+    const { lead, others, cluster_title, cluster_id, score } = cluster;
+    if (!lead) return '';
+
+    const noveltyClass = `novelty-${Math.round(lead.novelty_score)}`;
+    const impactClass = `impact-${Math.round(lead.impact_score)}`;
+
+    const tagsHtml = (lead.topic_tags || [])
+      .map(t => `<span class="tag">${escHtml(t)}</span>`)
+      .join('');
+
+    const alsoHtml = others.length > 0 ? `
+      <div class="also-covering">
+        <button class="also-toggle">
+          <span class="toggle-arrow">▶</span>
+          Also covering this (${others.length})
+        </button>
+        <div class="also-list">
+          ${others.map(a => `
+            <div class="also-item">
+              <span class="also-domain">${escHtml(a.source_domain)}</span>
+              <span class="also-headline">
+                <a href="${escHtml(a.url)}" target="_blank" rel="noopener noreferrer">
+                  ${escHtml(a.headline)}
+                </a>
+              </span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : '';
+
+    return `
+      <div class="cluster-card">
+        <div class="card-header">
+          <span class="cluster-label">${escHtml(cluster_title || cluster_id)}</span>
+          <span class="industry-badge">${escHtml(lead.industry)}</span>
+          <div class="score-badges">
+            <span class="score-badge">
+              <span class="score-dot ${noveltyClass}"></span>
+              <span class="novelty-label">N:${lead.novelty_score}</span>
+            </span>
+            <span class="score-badge">
+              <span class="score-dot ${impactClass}"></span>
+              <span class="impact-label">I:${lead.impact_score}</span>
+            </span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-headline">
+            <a href="${escHtml(lead.url)}" target="_blank" rel="noopener noreferrer">
+              ${escHtml(lead.headline)}
+            </a>
+          </div>
+          <div class="card-summary">${escHtml(lead.summary)}</div>
+          <div class="card-meta">
+            <span class="source-domain">${escHtml(lead.source_domain)}</span>
+            <span>${formatRelativeTime(lead.fetched_at)}</span>
+            <div class="tags">${tagsHtml}</div>
+          </div>
+        </div>
+        ${alsoHtml}
+      </div>
+    `;
+  }
+
+  // ── Polling for pipeline completion ────────────────────────────────────────
+  function pollForCompletion() {
+    const check = setInterval(async () => {
+      try {
+        const r = await fetch('/api/status');
+        const s = await r.json();
+        if (!s.pipeline_running) {
+          clearInterval(check);
+          loadFeed();
+        }
+      } catch {}
+    }, 3000);
+  }
+
+  // ── Countdown ─────────────────────────────────────────────────────────────
+  function startCountdown() {
+    countdownTimer = setInterval(() => {
+      if (!nextRefreshTs) { countdownEl.textContent = '—'; return; }
+      const diff = nextRefreshTs - Date.now();
+      if (diff <= 0) { countdownEl.textContent = 'now'; return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      countdownEl.textContent = h > 0
+        ? `${h}h ${pad(m)}m`
+        : `${pad(m)}m ${pad(s)}s`;
+    }, 1000);
+  }
+
+  // ── Utilities ──────────────────────────────────────────────────────────────
+  function formatRelativeTime(iso) {
+    if (!iso) return '—';
+    const diff = Date.now() - new Date(iso).getTime();
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return `${Math.floor(diff / 86400000)}d ago`;
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 5000);
+  }
+</script>
+</body>
+</html>
