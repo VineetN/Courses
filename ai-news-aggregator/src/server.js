@@ -133,8 +133,8 @@ app.listen(PORT, () => {
   serverLog.info(`Server running on http://localhost:${PORT}`);
 
   // Validate critical env vars
-  if (!process.env.ANTHROPIC_API_KEY) {
-    serverLog.warn('ANTHROPIC_API_KEY is not set — Claude calls will fail');
+  if (!process.env.OPENAI_API_KEY) {
+    serverLog.warn('OPENAI_API_KEY is not set — OpenAI calls will fail');
   }
   if (!process.env.BRAVE_API_KEY && !process.env.SERPER_API_KEY) {
     serverLog.warn('Neither BRAVE_API_KEY nor SERPER_API_KEY is set — search will fail');

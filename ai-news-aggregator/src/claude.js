@@ -1,12 +1,12 @@
-const Anthropic = require('@anthropic-ai/sdk');
+const OpenAI = require('openai');
 
 let client;
 function getClient() {
-  if (!client) client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  if (!client) client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   return client;
 }
 
-const MODEL = 'claude-sonnet-4-20250514';
+const MODEL = 'gpt-4o';
 
 /**
  * Generate search queries biased toward non-mainstream AI-in-industry news.
@@ -14,12 +14,18 @@ const MODEL = 'claude-sonnet-4-20250514';
  */
 async function generateSearchQueries() {
   const today = new Date().toISOString().split('T')[0];
-  const response = await getClient().messages.create({
+  const response = await getClient().chat.completions.create({
     model: MODEL,
     max_tokens: 1024,
-    messages: [{
-      role: 'user',
-      content: `Today is ${today}. Generate exactly 10 search queries to find unusual, non-obvious AI-in-industry news from the last 48 hours.
+    response_format: { type: 'json_object' },
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a research assistant that generates search queries. Always respond with valid JSON only.',
+      },
+      {
+        role: 'user',
+        content: `Today is ${today}. Generate exactly 10 search queries to find unusual, non-obvious AI-in-industry news from the last 48 hours.
 
 Goals:
 - Surface unexpected AI deployments in non-tech industries (agriculture, law, defense, healthcare, energy, logistics, insurance)
@@ -32,15 +38,17 @@ Goals:
 Bias toward sources: STAT News, Law360, Politico Pro, Nature, arXiv, Federal Register, SEC EDGAR, engineering blogs, government press releases, trade association newsletters.
 Avoid queries that would primarily return: TechCrunch, Wired, VentureBeat, The Verge.
 
-Return ONLY a JSON array of 10 query strings. No commentary, no markdown, no explanation. Example format:
-["query one", "query two", ...]`,
-    }],
+Return a JSON object with a single key "queries" containing an array of 10 query strings. Example:
+{"queries": ["query one", "query two", ...]}`,
+      },
+    ],
   });
 
-  const text = response.content[0].text.trim();
+  const text = response.choices[0].message.content.trim();
   const parsed = JSON.parse(text);
-  if (!Array.isArray(parsed)) throw new Error('Expected array of queries');
-  return parsed.slice(0, 10);
+  const queries = Array.isArray(parsed) ? parsed : parsed.queries;
+  if (!Array.isArray(queries)) throw new Error('Expected array of queries');
+  return queries.slice(0, 10);
 }
 
 /**
@@ -51,12 +59,18 @@ async function summarizeArticle(title, url, snippet, fullText) {
     ? `Title: ${title}\nURL: ${url}\n\nFull article text:\n${fullText}`
     : `Title: ${title}\nURL: ${url}\n\nSnippet: ${snippet}`;
 
-  const response = await getClient().messages.create({
+  const response = await getClient().chat.completions.create({
     model: MODEL,
     max_tokens: 512,
-    messages: [{
-      role: 'user',
-      content: `Analyze this article about AI in industry and return a JSON object. Return ONLY valid JSON — no markdown, no code fences, no explanation.
+    response_format: { type: 'json_object' },
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a news analysis assistant. Always respond with valid JSON only.',
+      },
+      {
+        role: 'user',
+        content: `Analyze this article about AI in industry and return a JSON object.
 
 ${content}
 
@@ -67,20 +81,19 @@ Required JSON schema:
   "industry": "one of: Healthcare, Finance, Defense, Legal, Agriculture, Energy, Logistics, Insurance, Manufacturing, Government, Education, Retail, Transportation, Research, Other",
   "novelty_score": <integer 1-10, where 10 = completely unexpected/non-obvious>,
   "impact_score": <integer 1-10, where 10 = major real-world consequence if true>,
-  "topic_tags": ["tag1", "tag2"] // 2-4 short lowercase tags for clustering, e.g. "drug-discovery", "ai-liability", "autonomous-vehicles"
+  "topic_tags": ["tag1", "tag2"]
 }
 
 Scoring guidance:
 - novelty_score: 1 = "another LLM announcement", 10 = "AI used in unexpected high-stakes domain in a surprising way"
 - impact_score: 1 = academic curiosity, 10 = affects millions of people or billions in capital
-- Reject pure product launches with novelty_score ≤ 3 (still score it, but be honest)`,
-    }],
+- topic_tags: 2-4 short lowercase tags, e.g. "drug-discovery", "ai-liability", "autonomous-vehicles"`,
+      },
+    ],
   });
 
-  const text = response.content[0].text.trim();
-  // Strip any accidental markdown fences
-  const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
-  return JSON.parse(cleaned);
+  const text = response.choices[0].message.content.trim();
+  return JSON.parse(text);
 }
 
 /**
@@ -97,19 +110,25 @@ async function clusterArticles(articles) {
     industry: a.industry,
   }));
 
-  const response = await getClient().messages.create({
+  const response = await getClient().chat.completions.create({
     model: MODEL,
     max_tokens: 2048,
-    messages: [{
-      role: 'user',
-      content: `You are a news editor grouping articles about AI in industry into topic clusters.
+    response_format: { type: 'json_object' },
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a news editor. Always respond with valid JSON only.',
+      },
+      {
+        role: 'user',
+        content: `Group these AI industry articles into topic clusters.
 
 Here are the articles:
 ${JSON.stringify(input, null, 2)}
 
-Group these articles into clusters where each cluster covers the same underlying story or closely related events. Articles with overlapping tags, similar industries, or clearly the same news event should be in the same cluster.
+Group articles that cover the same underlying story or closely related events into the same cluster.
 
-Return ONLY valid JSON — no markdown, no explanation. Format:
+Return a JSON object in this exact format:
 {
   "clusters": [
     {
@@ -122,15 +141,15 @@ Return ONLY valid JSON — no markdown, no explanation. Format:
 
 Rules:
 - Every article must appear in exactly one cluster
-- Singletons (articles that don't match anything) get their own cluster
+- Singletons get their own cluster
 - cluster_id must be a short lowercase slug (e.g. "ai-drug-discovery", "autonomous-weapons-policy")
 - title should be a crisp news-desk label, not a sentence`,
-    }],
+      },
+    ],
   });
 
-  const text = response.content[0].text.trim();
-  const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
-  const parsed = JSON.parse(cleaned);
+  const text = response.choices[0].message.content.trim();
+  const parsed = JSON.parse(text);
   return parsed.clusters || [];
 }
 
